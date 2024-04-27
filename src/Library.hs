@@ -71,7 +71,7 @@ aplicaImpuesto condicion factor envio
     | otherwise       = 0
 
 
-
+esInternacional _ = True -- mockeada para que compile
 
 
 
