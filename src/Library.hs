@@ -70,14 +70,61 @@ aplicaImpuesto condicion factor envio
     | condicion envio = (* factor) . precioBase $ envio
     | otherwise       = 0
 
+{- 2 cargos
+Cargo categórico: Si el envío tiene una categoría X, se computa un porcentaje dado del  precio base.
+Cargo por sobrepeso: Si el peso es menor o igual a un peso dado (en Kg.), no se afecta el precio. En el caso de ser mayor se le suma $80 por cada kilo que lo supere.
+Cargo arbitrario: $50 adicionales. Porque sí.
 
-esInternacional _ = True -- mockeada para que compile
+- Un cargo categórico de “tecnología” de 18%.
+-}
+aplicarCargo condicion funcion envio
+    | condicion envio = envio{ precioBase = funcion . precioBase $ envio }
+    | otherwise       = envio
 
+-- cargoCategorico :: String -> Number -> Cargo
+cargoCategorico categoria factor =
+    aplicarCargo (elem categoria . categorias) (* (1 + factor))
 
+-- cargoTecnologia :: Cargo
+cargoTecnologia = cargoCategorico "tecnología" 0.18
 
+-- cargoSobrepeso :: Number -> Cargo
+cargoSobrepeso pesoLimite envio =
+    aplicarCargo ((pesoLimite<). peso) (+ (80 * (peso envio - pesoLimite))) envio
 
+cargoArbitrario = aplicarCargo (const True) (+50)
 
+{- 3 
+Sobre el precio...
+a. Saber si el precio base de un envío cuesta más que un valor determinado N.
+b. Conocer si un envío es barato. Decimos que es barato si vale $1300 o menos (precio base).
+-}
 
+precioMayorA valor = (>valor) . precioBase
+
+esBarato  = not. precioMayorA 1300
+
+{-4 
+Sobre los lugares...
+a. Saber si un envío se dirige a un país determinado.
+b. Dado un envío, determinar si es local o es internacional. Es local cuando los países de origen y de destino son iguales.
+-}
+
+seDirigeA unPais = (unPais==).pais.destino
+
+esLocal envio = seDirigeA (pais.origen $ envio) envio
+esInternacional = not.esLocal
+
+{-5
+A partir de un conjunto de envíos, obtener aquellos que tienen ciertas categorías.
+Nota: No se puede usar expresiones lambda, definiciones locales ni funciones auxiliares.
+-}
+
+enviosConCategoria necesarias envios = 
+    filter (flip all necesarias.flip elem.categorias) envios
+
+--        filter (\ e -> all ( `elem` (categorias e) ) necesarias) envios
+-- `necesarias` incluido en `categorias`
 
 
 
